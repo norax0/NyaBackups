@@ -1,0 +1,11 @@
+name: NyaBackup
+version: '1.0'
+main: me.norax.nyaBackup.NyaBackup
+api-version: '1.21'
+
+commands:
+  nyabackup:
+    description: create a new backup
+    usage: /backup <new/list/load/info>
+    permission: nyabackup.backup
+

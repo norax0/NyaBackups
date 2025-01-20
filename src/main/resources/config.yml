@@ -1,0 +1,42 @@
+
+server_jar: 'paper.jar' # the name of the jar you run to start your server
+
+# when loading a backup,the server MUST restart so you
+# can automatically kick players and shows them a message.
+kick:
+  enabled: true
+  message: ''
+
+
+# 7zp: slower but smaller.
+# zip: faster but bigger.
+# (7zp is recommended unless you load backups constantly)
+compression_method: '7zp'
+
+robot:
+  enabled: false  # whether to enable automatic backups.
+  every: '1d'    # backup interval (s = seconds, m = minutes, h = hours, d = days eg 1d)
+  max: 5         # maximum number of backups to keep before deleting the oldest.
+
+optimizations:
+  # those are the files(or folders) that will NOT be included.
+  # in the backup zip.
+
+  exclude:
+    - '*.'
+    - 'plugins/*.jar'
+    - 'plugins/NyaBackup/*' # you should never remove this,unless you want loopholes.
+    - 'versions/*'
+    - 'libraries/*'
+    - 'cache/*'
+
+
+  # those are the files that are global for each backup
+  # for example we don't want to store a bunch of eula.txt
+  # it will not change, and its just wasted storage.
+
+  cached:
+    - 'logs/*' # Do not add folders,it will break that's a todo.
+    - 'icon.png'
+    - 'eula.txt'
+    - 'paper.jar' # this is ones of most space-saving optimizations,make sure to set your server jar here.

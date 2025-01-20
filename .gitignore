@@ -1,0 +1,9 @@
+
+#this is my local testing server lol
+server/ 
+target/
+
+.idea
+
+
+dependency-reduced-pom.xml
