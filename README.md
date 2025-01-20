@@ -1,6 +1,6 @@
 # NyaBackup
 
-> > [!WARNING]
+> [!WARNING]
 > there are definitely some issues with the plugin
 > you can use it,it works, but it's a bit barebones right now.
 
