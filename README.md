@@ -9,7 +9,7 @@ because most backup plugins are insanely hard to use,and "bloated", instead NyaB
 This means backups will take less storage space,but will take a bit longer to load,which if you are not constantly loading backups back and forth then it should not really be an issue.
 
 ## Where download?
-currently no releases pre-compiled binaries are available,you need to compile the project yourself.
+currently pre-compiled releases are available,you need to compile the project yourself.
 
 ## Compiling
 > [!NOTE]
