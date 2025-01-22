@@ -2,7 +2,7 @@
 
 > [!WARNING]
 > there are definitely some issues with the plugin
-> you can use it,it works, but it's a bit barebones right now.
+> you can use it,it works, but it's a-bit barebones right now.
 
 ## Why?
 because most backup plugins are insanely hard to use,and "bloated", instead NyaBackups tries to achieve the smallest possible backup size,for quantity over speed.
