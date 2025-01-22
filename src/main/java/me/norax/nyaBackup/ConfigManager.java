@@ -1,11 +1,13 @@
 package me.norax.nyaBackup;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 public class ConfigManager {
     private final NyaBackup plugin;
-    private FileConfiguration config;
+    private static FileConfiguration config;
 
     public ConfigManager(NyaBackup plugin) {
         this.plugin = plugin;
@@ -24,7 +26,7 @@ public class ConfigManager {
     public boolean isKickEnabled() {
         return config.getBoolean("kick.enabled", true);
     }
-    public String getKickMessage() {
+    public @Nullable String getKickMessage() {
         return config.getString("kick.message", "A backup has been loaded,server is restarting!");
     }
 
@@ -44,7 +46,7 @@ public class ConfigManager {
         return config.getString("compression-method", "7zp");
     }
 
-    public List<String> getExclusions() {
+    public static List<String> getExclusions() {
         return config.getStringList("optimizations.exclude");
     }
 

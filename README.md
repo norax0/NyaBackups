@@ -24,6 +24,13 @@ the release jar will be in target/NyaBackup-{version}
 
 ## Roadmap
 - [X] Load/create backups.
+- [ ] Cache files.
+- [ ] Achieve 0 (total) code warnings.
 - [X] Automatic scheduled backups.
 - [X] Resource monitoring.
 - [ ] Upload to online services like Google drive.
+- [ ] Do some renaming.
+- 
+## Drafts
+- [ ] Web ui.
+- [ ] Self FTP server.

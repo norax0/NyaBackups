@@ -23,13 +23,12 @@ optimizations:
   # in the backup zip.
 
   exclude:
-    - '*.'
+    - '*.jar'
     - 'plugins/*.jar'
-    - 'plugins/NyaBackup/*' # you should never remove this,unless you want loopholes.
-    - 'versions/*'
-    - 'libraries/*'
-    - 'cache/*'
-
+    - 'plugins/NyaBackup/**'
+    - 'versions/**'
+    - 'libraries/**'
+    - 'cache/**'
 
   # those are the files that are global for each backup
   # for example we don't want to store a bunch of eula.txt

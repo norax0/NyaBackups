@@ -35,17 +35,22 @@ public class Backup implements CommandExecutor {
 
         switch (args[0].toLowerCase()) {
             case "new":
-                sender.sendMessage("§aCreating backup(expect some small overload)...");
-
-                if (args.length < 2 || args[1].isBlank()) {
-                    plugin.getBackupManager().createBackup("");
-                } else {
-                    String backupName = args[1];
-                    plugin.getBackupManager().createBackup(backupName);
-                }
-                sender.sendMessage("§aBackup complete!");
-                sender.sendMessage();
+                sender.sendMessage("§aStarting backup...");
+                plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                    try {
+                        if (args.length < 2 || args[1].isBlank()) {
+                            plugin.getBackupManager().createBackup("");
+                        } else {
+                            String backupName = args[1];
+                            plugin.getBackupManager().createBackup(backupName);
+                        }
+                        sender.sendMessage("§aBackup complete!");
+                    } catch (Exception e) {
+                        sender.sendMessage("§cBackup failed: " + e.getMessage());
+                    }
+                });
                 break;
+
 
             case "load":
                 if (args.length < 2) {
