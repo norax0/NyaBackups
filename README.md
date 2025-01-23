@@ -30,7 +30,8 @@ the release jar will be in target/NyaBackup-{version}
 - [X] Resource monitoring.
 - [ ] Upload to online services like Google drive.
 - [ ] Do some renaming.
-- 
+- [ ] Proper tests.
+- [ ] Workflows
 ## Drafts
 - [ ] Web ui.
 - [ ] Self FTP server.

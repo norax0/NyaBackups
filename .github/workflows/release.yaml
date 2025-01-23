@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Compile
+        run: mvn package
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: output
+          path: target/*.jar
+          retention-days: 1
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.sha }}
+          release_name: "Release ${{ github.sha }}"
+          body_path: UPDATE.md
+          draft: false
+          prerelease: true
+
+      - name: Upload JAR to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: target/*.jar
+          asset_name: output.jar
+          asset_content_type: application/java-archive
+
+      - name: Manage releases
+        run: |
+          gh release list --limit 6 > releases.txt
+          if [ $(wc -l < releases.txt) -gt 5 ]; then
+            oldest_release=$(tail -1 releases.txt | awk '{print $1}')
+            gh release delete $oldest_release --yes
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
