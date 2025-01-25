@@ -19,7 +19,7 @@ public class ConfigManager {
         config = plugin.getConfig();
     }
 
-    public String getServerJar() {
+    public static String getServerJar() {
         return config.getString("server_jar", "paper.jar");
     }
 
@@ -50,7 +50,7 @@ public class ConfigManager {
         return config.getStringList("optimizations.exclude");
     }
 
-    public List<String> getCached() {
+    public static List<String> getCaches() {
         return config.getStringList("optimizations.cached");
     }
 }

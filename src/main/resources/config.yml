@@ -11,7 +11,7 @@ kick:
 # 7zp: slower but smaller.
 # zip: faster but bigger.
 # (7zp is recommended unless you load backups constantly)
-compression_method: '7zp'
+compression_method: '7z'
 
 robot:
   enabled: false  # whether to enable automatic backups.

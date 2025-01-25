@@ -9,7 +9,7 @@ because most backup plugins are insanely hard to use,and "bloated", instead NyaB
 This means backups will take less storage space,but will take a bit longer to load,which if you are not constantly loading backups back and forth then it should not really be an issue.
 
 ## Where download?
-currently pre-compiled releases are not available,you need to compile the project yourself.
+you can download them in the releases section,any release with the "pre-release" tag is automatically built upon a commit.
 
 ## Compiling
 > [!NOTE]
@@ -31,7 +31,9 @@ the release jar will be in target/NyaBackup-{version}
 - [ ] Upload to online services like Google drive.
 - [ ] Do some renaming.
 - [ ] Proper tests.
-- [ ] Workflows
+- [ ] Workflows (release/build/test)
+- [X] Tab completitions.
+
 ## Drafts
 - [ ] Web ui.
 - [ ] Self FTP server.

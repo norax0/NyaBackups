@@ -1,4 +1,4 @@
-name: Build and Release
+name: Pre-release
 
 on:
   push:
@@ -31,19 +31,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ env.TAG }}
-          release_name: "Release ${{ env.TAG }}"
+          release_name: "Auto built pre-release ${{ env.TAG }}"
           body_path: UPDATE.md
           draft: false
           prerelease: true
 
-      - name: Upload JAR to release
+      - name: Upload jar
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: target/original-NyaBackup-1.1.jar
-          asset_name: Nyabackup
+          asset_path: target/original-NyaBackup-1.1.2.jar
+          asset_name: Nyabackup-alpha-build
           asset_content_type: application/java-archive
 
       - name: Manage releases

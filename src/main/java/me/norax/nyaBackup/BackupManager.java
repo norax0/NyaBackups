@@ -1,7 +1,9 @@
 package me.norax.nyaBackup;
 
+import me.norax.nyaBackup.helpers.Logger;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -12,8 +14,11 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.norax.nyaBackup.methods.Compressor;
+import me.norax.nyaBackup.methods.Cacher;
 
 import static net.lingala.zip4j.util.Zip4jUtil.createDirectoryIfNotExists;
 import static org.codehaus.plexus.util.FileUtils.deleteDirectory;
@@ -23,37 +28,17 @@ public class BackupManager {
     private final ConfigManager config;
     private final Compressor compressor;
     private BukkitRunnable backupTask;
-    private final Map<String, String> cachedFileHashes;
-    private final Path cachePath;
     private final Path serverDir;
     private final Path backupDir;
 
+    private final Cacher cacher;
     public BackupManager(NyaBackup plugin) {
         this.plugin = plugin;
+        this.cacher = new Cacher(plugin);
         this.config = plugin.getConfigManager();
         this.serverDir = plugin.getServer().getWorldContainer().toPath();
-        this.cachePath = plugin.getDataFolder().toPath().resolve("cache");
         this.backupDir = plugin.getDataFolder().toPath().resolve("backups");
-        this.cachedFileHashes = new HashMap<>();
         this.compressor = new Compressor(plugin);
-        initializeCache();
-    }
-
-    private void initializeCache() {
-        try {
-            createDirectoryIfNotExists(cachePath.toFile());
-            List<String> cachedFiles = new ArrayList<>(config.getCached());
-            cachedFiles.add(config.getServerJar());
-
-            for (String filename : cachedFiles) {
-                Path hashFile = cachePath.resolve(filename + ".hash");
-                if (Files.exists(hashFile)) {
-                    cachedFileHashes.put(filename, Files.readString(hashFile));
-                }
-            }
-        } catch (IOException e) {
-            logError("Failed to initialize cache", e);
-        }
     }
 
     public void createBackup(String name) {
@@ -71,28 +56,51 @@ public class BackupManager {
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                 try {
                     String backupFileName = name.isBlank() ?
-                            "backup_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".zip" :
-                            name.endsWith(".zip") ? name : name + ".zip";
+                            "backup_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) :
+                            name;
 
-                    Path backupFile = backupDir.resolve(backupFileName);
+                    Path backupFile = backupDir.resolve(backupFileName.endsWith(".zip") || backupFileName.endsWith(".7z") ? backupFileName :
+                            config.getCompressionMethod().equalsIgnoreCase("zip") ? backupFileName + ".zip" : backupFileName + ".7z");
+
                     List<Path> filesToBackup = getFilesToBackup();
-                    compressor.createZipBackup(backupFile, filesToBackup, name);
+
+                    String compressionMethod = config.getCompressionMethod().toLowerCase();
+
+                    switch (compressionMethod) {
+                        case "zip":
+                            compressor.createZipBackup(backupFile, filesToBackup, backupFileName);
+                            break;
+                        case "7z":
+                            compressor.create7zBackup(backupFile, filesToBackup, backupFileName);
+                            break;
+                        default:
+                            Logger.warn("Unsupported compression method found(" + config.getCompressionMethod() + ") falling back to 7z");
+                            compressor.create7zBackup(backupFile, filesToBackup, backupFileName);
+                            break;
+                    }
+
+                    getFilesToCache().forEach(file -> {
+                        try {
+                            cacher.cacheFile(file);
+                        } catch (Exception e) {
+                            logError("Failed to cache file: " + file, e);
+                        }
+                    });
 
                     cleanOldBackups();
+                    Logger.success("Created backup at:", backupFileName);
 
-                    plugin.getLogger().info("Backup created: " + backupFile);
                 } catch (IOException | NoSuchAlgorithmException e) {
-                    logError("Backup failed", e);
+                    Logger.error("Error creating backup: " + e.getMessage());
                 }
             });
         } catch (Exception e) {
             logError("Backup initialization failed", e);
         } finally {
-            plugin.getServer().getScheduler().runTask(plugin, () -> {
-                plugin.getServer().getWorlds().forEach(world -> world.setAutoSave(true));
-            });
+            plugin.getServer().getWorlds().forEach(world -> world.setAutoSave(true));
         }
     }
+
 
     public void loadBackup(Path backupFile) throws IOException {
         if (!Files.exists(backupFile)) {
@@ -104,6 +112,28 @@ public class BackupManager {
         try {
             compressor.extractZipBackup(backupFile, tempDir);
 
+            try (Stream<Path> paths = Files.walk(tempDir)) {
+                List<Path> fileList = paths
+                        .filter(path -> !Files.isDirectory(path))
+                        .filter(path -> !path.toString().endsWith(".reference"))
+                        .filter(path -> !path.toString().endsWith(".dat"))
+                        .filter(path -> !path.toString().endsWith(".dat_old"))
+                        .toList();
+
+                for (Path path : fileList) {
+                    Path relativePath = tempDir.relativize(path);
+                    Path targetPath = serverDir.resolve(relativePath);
+                    createDirectoryIfNotExists(targetPath.getParent().toFile());
+
+                    String filename = path.getFileName().toString();
+                    try {
+                        cacher.restoreCachedFile(filename);
+                    } catch (IOException cachedFileNotFound) {
+                        Files.copy(path, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+            }
+
             if (config.isKickEnabled()) {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     player.kick(Component.text(Objects.requireNonNull(config.getKickMessage())));
@@ -112,23 +142,19 @@ public class BackupManager {
 
             plugin.getServer().shutdown();
 
-            try (Stream<Path> paths = Files.walk(tempDir)) {
-                paths.filter(path -> !Files.isDirectory(path))
-                        .filter(path -> !path.toString().endsWith(".reference"))
-                        .forEach(path -> {
-                            try {
-                                Path relativePath = tempDir.relativize(path);
-                                Path targetPath = serverDir.resolve(relativePath);
-                                createDirectoryIfNotExists(targetPath.getParent().toFile());
-                                Files.copy(path, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                            } catch (IOException e) {
-                                logError("Failed to restore file: " + path, e);
-                            }
-                        });
-            }
         } finally {
             deleteDirectory(tempDir.toFile());
         }
+    }
+
+
+    private List<Path> getFilesToCache() throws IOException {
+        List<String> cachePaths = ConfigManager.getCaches();
+        return cachePaths.stream()
+                .map(serverDir::resolve)
+                .filter(Files::exists)
+                .filter(Files::isRegularFile)
+                .collect(Collectors.toList());
     }
 
     private List<Path> getFilesToBackup() throws IOException {
@@ -143,7 +169,6 @@ public class BackupManager {
             return stream.filter(Files::isRegularFile)
                     .filter(file -> {
                         Path relativePath = serverDir.relativize(file);
-                        String pathStr = relativePath.toString().replace('\\', '/');
                         boolean excluded = matchers.stream()
                                 .anyMatch(matcher -> matcher.matches(relativePath));
 
@@ -201,6 +226,12 @@ public class BackupManager {
     }
 
     public void shutdown() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.kick(Component.text("Server is restarting."));
+        }
+
+        plugin.getServer().getWorlds().forEach(world -> world.setAutoSave(false));
+
         if (backupTask != null) {
             backupTask.cancel();
         }

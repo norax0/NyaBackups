@@ -1,6 +1,6 @@
 package me.norax.nyaBackup;
 
-import me.norax.nyaBackup.commands.Backup;
+import me.norax.nyaBackup.commands.Snapshot;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.logging.Logger;
 import org.bukkit.command.PluginCommand;
@@ -23,7 +23,8 @@ public final class NyaBackup extends JavaPlugin {
 
             PluginCommand command = getCommand("nyabackup");
             if (command != null) {
-                command.setExecutor(new Backup(this));
+                command.setExecutor(new Snapshot(this));
+                command.setTabCompleter(new Snapshot(this));
             }
 
             if (configManager.isRobotEnabled()) {
